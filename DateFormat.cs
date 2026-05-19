@@ -174,8 +174,10 @@ namespace DateFormat
                     // save the new format
                     Configuration<DateFormatConfiguration>.Save();
 
-                    // on the options panel, display the current date in the new format
-                    currentDate.text = DateTime.Now.ToString(config.BuildDateFormatString());
+                    // on the options panel, display the current date in the new format,
+                    // applying the same year offset the game will show (reuses OffsetAndFormat)
+                    DateTime now = DateTime.Now;
+                    currentDate.text = HarmonyPatcher.OffsetAndFormat(ref now, config.BuildDateFormatString());
 
                     // reapply Harmony patches
                     HarmonyPatcher.ReapplyPatches();
