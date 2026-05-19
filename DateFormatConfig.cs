@@ -23,11 +23,30 @@
         public const bool DefaultMonthLeadingZero = true;
         public const bool DefaultDayLeadingZero = true;
 
+        // display year offset bounds (band far wider than any plausible need;
+        // keeps realistic in-game dates well inside DateTime's 1-9999 range)
+        public const int DefaultOffsetYears = 0;
+        public const int MinOffsetYears = -1000;
+        public const int MaxOffsetYears =  1000;
+
         // date format options
         public string Order = DefaultOrder;
         public string Separator = DefaultSeparator;
         public bool MonthLeadingZero = DefaultMonthLeadingZero;
         public bool DayLeadingZero = DefaultDayLeadingZero;
+
+        // display-only year offset (0 = off; negative = past, positive = future)
+        public int OffsetYears = DefaultOffsetYears;
+
+        /// <summary>
+        /// the configured offset clamped to the valid band
+        /// </summary>
+        public int ClampedOffsetYears()
+        {
+            if (OffsetYears < MinOffsetYears) return MinOffsetYears;
+            if (OffsetYears > MaxOffsetYears) return MaxOffsetYears;
+            return OffsetYears;
+        }
 
         /// <summary>
         /// build a date format string based on the configured options

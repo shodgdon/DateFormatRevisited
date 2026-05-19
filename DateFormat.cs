@@ -95,6 +95,25 @@ namespace DateFormat
                 NewDateFormat(config, currentDate);
             });
 
+            // display year offset (display-only; 0 = off, - = past, + = future)
+            // parse + clamp on submit (not per keystroke) so typing "-", "-3", "-30" isn't fought
+            // declared null first so the submit lambda can capture it (definite assignment)
+            UITextField offsetYears = null;
+            offsetYears = (UITextField)group.AddTextfield(
+                "Display year offset (0 = off, - = past, + = future)",
+                config.ClampedOffsetYears().ToString(),
+                (string t) => { },
+                (string t) =>
+                {
+                    int parsed;
+                    if (!int.TryParse(t, out parsed)) parsed = DateFormatConfiguration.DefaultOffsetYears;
+                    if (parsed < DateFormatConfiguration.MinOffsetYears) parsed = DateFormatConfiguration.MinOffsetYears;
+                    if (parsed > DateFormatConfiguration.MaxOffsetYears) parsed = DateFormatConfiguration.MaxOffsetYears;
+                    config.OffsetYears = parsed;
+                    offsetYears.text = parsed.ToString();   // reflect clamp/normalize back to the field
+                    NewDateFormat(config, currentDate);      // saves + ReapplyPatches
+                });
+
             // reset to default
             group.AddSpace(10);
             UIButton resetToDefault = (UIButton)group.AddButton(" Reset To Default ", () =>
@@ -131,6 +150,11 @@ namespace DateFormat
                 monthLeadingZero.isChecked = DateFormatConfiguration.DefaultMonthLeadingZero;
                 dayLeadingZero.isChecked = DateFormatConfiguration.DefaultDayLeadingZero;
 
+                // set default year offset (set config directly so reset works
+                // regardless of whether programmatic .text fires the submit event)
+                config.OffsetYears = DateFormatConfiguration.DefaultOffsetYears;
+                offsetYears.text = DateFormatConfiguration.DefaultOffsetYears.ToString();
+
                 // now run new date format, even if nothing changed
                 _runNewDateFormat = true;
                 NewDateFormat(config, currentDate);
@@ -150,8 +174,10 @@ namespace DateFormat
                     // save the new format
                     Configuration<DateFormatConfiguration>.Save();
 
-                    // on the options panel, display the current date in the new format
-                    currentDate.text = DateTime.Now.ToString(config.BuildDateFormatString());
+                    // on the options panel, display the current date in the new format,
+                    // applying the same year offset the game will show (reuses OffsetAndFormat)
+                    DateTime now = DateTime.Now;
+                    currentDate.text = HarmonyPatcher.OffsetAndFormat(ref now, config.BuildDateFormatString());
 
                     // reapply Harmony patches
                     HarmonyPatcher.ReapplyPatches();
