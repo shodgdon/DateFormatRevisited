@@ -184,13 +184,21 @@ Before writing code, decide what the user-facing configuration looks like.  Sugg
 
 The "apply to" toggles matter because users might want offset on the HUD but real dates on event panels.
 
-Start with just Fixed Years applied to the main HUD only.  Ship the MVP, expand based on feedback.
+### Decided (2026-05-18)
+
+- **Mode:** Fixed Years only.  Single `OffsetYears` (int, default `0`; `0` = off).  No mode enum; Fixed Date Anchor deferred unless requested.
+- **Sign convention:** `displayed = actual.AddYears(OffsetYears)` — negative = past, positive = future (intuitive UX).  Clamp config to a sane band; clamp the *resulting* date to `DateTime`'s 1–9999 range so `AddYears` never throws.
+- **Display-only:** never alters the simulation or save files.
+- **MVP scope:** offset every base-game date the original mod already patches (main HUD + ChirpX + Festival + Football + Varsity Sports).  This **merges Phase 5 and Phase 6** into one offset effort on a single `feat/date-offset` branch.
+- **Post-1.0 (1.X):** Race Day / newer panels (Phase 7) and mod-to-mod offset (Phase 8) — these need extra mods/expansions to test and add conditional surface area.
 
 ---
 
 ## Phase 5: First Feature—Main HUD Date Offset (2–4 hours)
 
 This is the real proof of concept.  If this works, everything else is repetition.
+
+> **Scope note (Phase 4 decision):** the MVP covers the main HUD *and* the other base-game panels (the old Phase 6) as one effort on `feat/date-offset`.  The steps below stay the HUD-first proof of concept; Phase 6 then mechanically repeats the pattern for the remaining panels before the MVP merges.
 
 ### Steps
 
