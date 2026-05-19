@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DateFormat</RootNamespace>
-    <AssemblyName>DateFormat</AssemblyName>
+    <AssemblyName>DateFormatRevisited</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>false</Deterministic>
@@ -87,9 +87,9 @@
   <!-- Mac LocalMods deploy. Replaces the original Windows xcopy/del PostBuildEvent.
        MSBuild <Copy>/<MakeDir> tasks are cross-platform (no shell commands), so
        this works under Mono msbuild and Rider on macOS.
-       NOTE: the DLL is still DateFormat.dll until Phase 2 renames the assembly;
-       the deploy *folder* is already DateFormatRevisited (folder name and DLL
-       name need not match for a CS1 local mod). -->
+       NOTE: assembly is DateFormatRevisited (renamed in Phase 2); the deploy
+       folder is also DateFormatRevisited. Folder name and DLL name need not
+       match for a CS1 local mod, but here they do. -->
   <PropertyGroup>
     <ModDeployPath>$(HOME)/Library/Application Support/Colossal Order/Cities_Skylines/Addons/Mods/DateFormatRevisited</ModDeployPath>
   </PropertyGroup>

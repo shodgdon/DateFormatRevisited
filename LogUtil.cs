@@ -10,8 +10,8 @@ namespace DateFormat
     public class LogUtil
     {
         // text to place in front of messages to make them easier to find in the log file
-        // assumes the namespace of LogUtil is same namespace used thoughout the project
-        private static readonly string MessagePrefix = "[" + typeof(LogUtil).Namespace + "] ";
+        // hardcoded; intentionally decoupled from the C# namespace (which stays "DateFormat")
+        private static readonly string MessagePrefix = "[DateFormatRevisited] ";
 
         /// <summary>
         /// log an info message

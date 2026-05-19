@@ -9,8 +9,8 @@ namespace DateFormat
     public class DateFormat : IUserMod
     {
         // required name and description of this mod
-        public string Name => "Date Format";
-        public string Description => "Specify the format for dates in the game";
+        public string Name => "Date Format Revisited";
+        public string Description => "Revival of the Date Format mod. Specify the format for dates in the game.";
 
         // whether or not to allow the NewDateFormat routine to run
         private static bool _runNewDateFormat = true;

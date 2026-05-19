@@ -15,7 +15,7 @@ namespace DateFormat
     internal static class HarmonyPatcher
     {
         // Harmony ID unique to this mod
-        private const string HarmonyId = "com.github.rcav8tr.DateFormat";
+        private const string HarmonyId = "com.github.shodgdon.DateFormatRevisited";
 
         // whether or not Harmony patches were applied
         private static bool Patched = false;

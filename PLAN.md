@@ -272,6 +272,7 @@ Test with each of those mods installed.  Some users will have them, some will no
 
 - **Compatibility declaration:** declare incompatibility with the original DateFormat mod so users do not run both.  The mod loader supports this.
 - **Logging cleanup:** dial down verbose dev logging, keep error logging.
+- **Config file location (deferred from Phase 2):** `Configuration.cs` `GetConfigFile()` returns a bare filename, so the config is written to the process working directory (the Steam game install dir), where Steam "verify integrity" / game updates can wipe it.  Relocate to the standard user folder (`~/Library/Application Support/Colossal Order/Cities_Skylines/`) via the game's `ColossalFramework.IO.DataLocation` API.  Inherited from the original mod; needs its own retest.
 - **Test on a fresh save:** start a new city, play through real-time events, verify nothing breaks.
 - **Test enabling and disabling at runtime:** the mod should clean up its patches when disabled.
 - **Final README review:** make sure new features, credits, and migration notes from the original are clear.
