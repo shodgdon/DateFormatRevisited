@@ -4,7 +4,7 @@
     /// define global (i.e. for this mod but not game specific) configuration properties
     /// </summary>
     /// <remarks>convention for the config file name seems to be the mod name + "Config.xml"</remarks>
-    [ConfigurationFileName("DateFormatConfig.xml")]
+    [ConfigurationFileName("DateFormatRevisitedConfig.xml")]
     public class DateFormatConfiguration
     {
         // define constants for configuration options

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("Cities Skylines Mod")]
-[assembly: AssemblyDescription("Specify the format for dates in the game")]
+[assembly: AssemblyDescription("Revival of the Date Format mod. Specify the format for dates in the game.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Date Format")]
-[assembly: AssemblyCopyright("Copyright © 2021-2022")]
+[assembly: AssemblyProduct("Date Format Revisited")]
+[assembly: AssemblyCopyright("Original work Copyright © 2021-2024 rcav8tr. Revival Copyright © 2026 shodgdon. MIT License.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -32,8 +32,8 @@ namespace DateFormat
                         // create dialog panel
                         ExceptionPanel panel = ColossalFramework.UI.UIView.library.ShowModal<ExceptionPanel>("ExceptionPanel");
                         panel.SetMessage(
-                            "Date Format",
-                            "The Date Format mod is a replacement for the Date Reformatter mod.  " + Environment.NewLine + Environment.NewLine +
+                            "Date Format Revisited",
+                            "The Date Format Revisited mod is a replacement for the Date Reformatter mod.  " + Environment.NewLine + Environment.NewLine +
                             "Please unsubscribe from the Date Reformatter mod.",
                             false);
 
