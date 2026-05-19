@@ -361,3 +361,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Date Format Revisited — machine-specific build settings (copy from *.template)
+Directory.Build.props
+# Decompiled game source (Phase 3) — Colossal Order IP, never commit
+reference/
+# macOS / IDE / tooling cruft
+.DS_Store
+.idea/
+.claude/

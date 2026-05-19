@@ -1,0 +1,16 @@
+<Project>
+  <!--
+    SETUP: copy this file to "Directory.Build.props" (same folder) and set
+    CitiesSkylinesPath to the "Managed" folder of your Cities: Skylines install.
+    Directory.Build.props is gitignored; this template is committed.
+
+    macOS (Steam):
+      /Users/<you>/Library/Application Support/Steam/steamapps/common/Cities_Skylines/Cities.app/Contents/Resources/Data/Managed
+
+    Windows (Steam):
+      C:\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed
+  -->
+  <PropertyGroup>
+    <CitiesSkylinesPath>/path/to/Cities_Skylines/.../Data/Managed</CitiesSkylinesPath>
+  </PropertyGroup>
+</Project>

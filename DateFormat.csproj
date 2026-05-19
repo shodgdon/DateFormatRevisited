@@ -37,7 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(CitiesSkylinesPath)/Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="CitiesHarmony.API, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -48,11 +48,11 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="ColossalManaged">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ColossalManaged.dll</HintPath>
+      <HintPath>$(CitiesSkylinesPath)/ColossalManaged.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="ICities">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\ICities.dll</HintPath>
+      <HintPath>$(CitiesSkylinesPath)/ICities.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -62,7 +62,7 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Cities_Skylines\Cities_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(CitiesSkylinesPath)/UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -84,11 +84,26 @@
     <None Include="LICENSE.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- Mac LocalMods deploy. Replaces the original Windows xcopy/del PostBuildEvent.
+       MSBuild <Copy>/<MakeDir> tasks are cross-platform (no shell commands), so
+       this works under Mono msbuild and Rider on macOS.
+       NOTE: the DLL is still DateFormat.dll until Phase 2 renames the assembly;
+       the deploy *folder* is already DateFormatRevisited (folder name and DLL
+       name need not match for a CS1 local mod). -->
   <PropertyGroup>
-    <PostBuildEvent>mkdir "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
-del "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)\$(TargetFileName)"
-del "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)\CitiesHarmony.API.dll"
-xcopy /y "$(TargetPath)" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"
-xcopy /y "$(TargetDir)CitiesHarmony.API.dll" "%25LOCALAPPDATA%25\Colossal Order\Cities_Skylines\Addons\Mods\$(SolutionName)"</PostBuildEvent>
+    <ModDeployPath>$(HOME)/Library/Application Support/Colossal Order/Cities_Skylines/Addons/Mods/DateFormatRevisited</ModDeployPath>
   </PropertyGroup>
+  <Target Name="DeployMod" AfterTargets="Build">
+    <MakeDir Directories="$(ModDeployPath)" />
+    <Copy SourceFiles="$(TargetPath)"
+          DestinationFolder="$(ModDeployPath)"
+          OverwriteReadOnlyFiles="true"
+          SkipUnchangedFiles="false" />
+    <Copy SourceFiles="$(TargetDir)CitiesHarmony.API.dll"
+          DestinationFolder="$(ModDeployPath)"
+          OverwriteReadOnlyFiles="true"
+          SkipUnchangedFiles="false" />
+    <Message Importance="high"
+             Text="Deployed $(TargetFileName) + CitiesHarmony.API.dll -&gt; $(ModDeployPath)" />
+  </Target>
 </Project>
