@@ -40,13 +40,14 @@ namespace DateFormat
                 }
 
                 // patch each method from the game that has a hard-coded date format
-                CreateTranspilerPatch(typeof(UIDateTimeWrapper      ),"Check",                 BindingFlags.Public    | BindingFlags.Instance, out MethodInfo _);    // main game date
-                CreateTranspilerPatch(typeof(ChirpXPanel            ),"UpdateBindings",        BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _);
-                CreateTranspilerPatch(typeof(FestivalPanel          ),"RefreshCurrentConcert", BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _);
-                CreateTranspilerPatch(typeof(FestivalPanel          ),"RefreshFutureConcert",  BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _);
-                CreateTranspilerPatch(typeof(FootballPanel          ),"RefreshMatchInfo",      BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _);
-                CreateTranspilerPatch(typeof(VarsitySportsArenaPanel),"RefreshPastMatches",    BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _);
-                CreateTranspilerPatch(typeof(VarsitySportsArenaPanel),"RefreshNextMatchDates", BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _);
+                // base-game patches get format + display-only year offset (applyOffset: true)
+                CreateTranspilerPatch(typeof(UIDateTimeWrapper      ),"Check",                 BindingFlags.Public    | BindingFlags.Instance, out MethodInfo _, applyOffset: true);    // main game date
+                CreateTranspilerPatch(typeof(ChirpXPanel            ),"UpdateBindings",        BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _, applyOffset: true);
+                CreateTranspilerPatch(typeof(FestivalPanel          ),"RefreshCurrentConcert", BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _, applyOffset: true);
+                CreateTranspilerPatch(typeof(FestivalPanel          ),"RefreshFutureConcert",  BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _, applyOffset: true);
+                CreateTranspilerPatch(typeof(FootballPanel          ),"RefreshMatchInfo",      BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _, applyOffset: true);
+                CreateTranspilerPatch(typeof(VarsitySportsArenaPanel),"RefreshPastMatches",    BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _, applyOffset: true);
+                CreateTranspilerPatch(typeof(VarsitySportsArenaPanel),"RefreshNextMatchDates", BindingFlags.NonPublic | BindingFlags.Instance, out MethodInfo _, applyOffset: true);
 
                 // patch Extended InfoPanel mod; original version that has by far the most subsribers
                 bool patchedExtendedInfoPanel1 = CreateTranspilerPatchForMod(
@@ -152,7 +153,7 @@ namespace DateFormat
         /// <summary>
         /// create a transpiler patch based on type and method name
         /// </summary>
-        private static bool CreateTranspilerPatch(Type originalType, string originalMethodName, BindingFlags bindingFlags, out MethodInfo originalMethod)
+        private static bool CreateTranspilerPatch(Type originalType, string originalMethodName, BindingFlags bindingFlags, out MethodInfo originalMethod, bool applyOffset = false)
         {
             // initialize return value
             originalMethod = null;
@@ -178,11 +179,14 @@ namespace DateFormat
                     return false;
                 }
 
-                // get the transpiler method
-                MethodInfo transpilerMethod = typeof(HarmonyPatcher).GetMethod(nameof(ReplaceDateFormatString), BindingFlags.Static | BindingFlags.NonPublic);
+                // get the transpiler method (base-game patches also apply the year offset)
+                string transpilerName = applyOffset
+                    ? nameof(ReplaceDateFormatStringWithOffset)
+                    : nameof(ReplaceDateFormatString);
+                MethodInfo transpilerMethod = typeof(HarmonyPatcher).GetMethod(transpilerName, BindingFlags.Static | BindingFlags.NonPublic);
                 if (transpilerMethod == null)
                 {
-                    LogUtil.LogError($"Error patching {fullMethodName}.  Unable to find patch transpiler method HarmonyPatcher.ReplaceDateFormatString.");
+                    LogUtil.LogError($"Error patching {fullMethodName}.  Unable to find patch transpiler method HarmonyPatcher.{transpilerName}.");
                     return false;
                 }
 
@@ -296,18 +300,79 @@ namespace DateFormat
         }
 
         /// <summary>
-        /// find and replace hard-coded date formats with the configured date format
+        /// apply the configured display-only year offset, then format.
+        /// IL-compatible drop-in for instance DateTime.ToString(string): the
+        /// receiver address (DateTime&amp;) and the format string are already on
+        /// the stack, matching this static signature exactly.
+        /// never throws (year bounds pre-checked + try/catch fallback) so a
+        /// date display can never break a game panel.
+        /// </summary>
+        public static string OffsetAndFormat(ref DateTime value, string format)
+        {
+            try
+            {
+                int offset = Configuration<DateFormatConfiguration>.Load().ClampedOffsetYears();
+                if (offset == 0)
+                {
+                    return value.ToString(format);
+                }
+
+                // clamp the resulting year so AddYears never throws on extreme in-game dates
+                int targetYear = value.Year + offset;
+                DateTime shifted;
+                if      (targetYear < 1)    { shifted = DateTime.MinValue; }
+                else if (targetYear > 9999) { shifted = DateTime.MaxValue; }
+                else                        { shifted = value.AddYears(offset); }
+                return shifted.ToString(format);
+            }
+            catch (Exception ex)
+            {
+                LogUtil.LogException(ex);
+                return value.ToString(format);
+            }
+        }
+
+        /// <summary>
+        /// transpiler entry point: replace hard-coded date formats only.
+        /// used by mod-to-mod patches (offset deferred to post-1.0).
         /// </summary>
         private static IEnumerable<CodeInstruction> ReplaceDateFormatString(IEnumerable<CodeInstruction> instructions)
+        {
+            return TransformDateFormat(instructions, applyOffset: false);
+        }
+
+        /// <summary>
+        /// transpiler entry point: replace hard-coded date formats and apply the
+        /// display-only year offset.  used by base-game patches.
+        /// </summary>
+        private static IEnumerable<CodeInstruction> ReplaceDateFormatStringWithOffset(IEnumerable<CodeInstruction> instructions)
+        {
+            return TransformDateFormat(instructions, applyOffset: true);
+        }
+
+        /// <summary>
+        /// find and replace hard-coded date formats with the configured date
+        /// format; when applyOffset is true, also retarget the paired
+        /// DateTime.ToString(string) call to OffsetAndFormat so the displayed
+        /// date is shifted by the configured year offset
+        /// </summary>
+        private static IEnumerable<CodeInstruction> TransformDateFormat(IEnumerable<CodeInstruction> instructions, bool applyOffset)
         {
             // get the configured date format
             DateFormatConfiguration config = Configuration<DateFormatConfiguration>.Load();
             string dateFormat = config.BuildDateFormatString();
 
+            // resolve the methods to match/retarget
+            MethodInfo dateTimeToString = typeof(DateTime).GetMethod("ToString", new Type[] { typeof(string) });
+            MethodInfo offsetAndFormat = typeof(HarmonyPatcher).GetMethod(nameof(OffsetAndFormat), BindingFlags.Static | BindingFlags.Public);
+
             // copy instructions to new instructions
             List<CodeInstruction> newInstructions = new List<CodeInstruction>(instructions);
 
-            // find and replace all occurrences of "dd/MM/yyyy", "yyyy-MM-dd", and "d" with the configured date format
+            // find and replace all occurrences of "dd/MM/yyyy", "yyyy-MM-dd", and "d" with the configured date format;
+            // the format ldstr is always the last push immediately before the paired DateTime.ToString(string) call
+            // (C# shape X.ToString("dd/MM/yyyy")), so retargetPending confines the offset retarget to exactly that call
+            bool retargetPending = false;
             foreach (CodeInstruction instruction in newInstructions)
             {
                 if (instruction.opcode == System.Reflection.Emit.OpCodes.Ldstr)
@@ -316,7 +381,19 @@ namespace DateFormat
                     if (operand == "dd/MM/yyyy" || operand == "yyyy-MM-dd" || operand == "d")
                     {
                         instruction.operand = dateFormat;
+                        retargetPending = true;
                     }
+                    continue;
+                }
+
+                if (applyOffset && retargetPending &&
+                    (instruction.opcode == System.Reflection.Emit.OpCodes.Callvirt ||
+                     instruction.opcode == System.Reflection.Emit.OpCodes.Call) &&
+                    (instruction.operand as MethodInfo) == dateTimeToString)
+                {
+                    instruction.opcode = System.Reflection.Emit.OpCodes.Call; // static target
+                    instruction.operand = offsetAndFormat;
+                    retargetPending = false;
                 }
             }
 

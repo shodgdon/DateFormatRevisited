@@ -28,9 +28,10 @@ is planned post-1.0.
 
 ## Architecture
 - Harmony patching via CitiesHarmony.API; `HarmonyHelper` gates availability.
-- Existing patches are **transpilers** that swap hardcoded date-format strings
-  (`HarmonyPatcher.cs`). The offset feature adds **prefix** patches that shift
-  the `DateTime` before the (transpiled) formatting runs, so the two compose.
+- Patches are **transpilers** (`HarmonyPatcher.cs`) that swap hardcoded
+  date-format strings. The offset feature **extends the same transpiler pass**
+  rather than adding prefix patches (prefixes can't reach the local-variable
+  date in ChirpX/Football/Varsity-PastMatches — see Offset feature below).
 - Must work with or without each optionally-patched mod present (graceful
   degradation; `CreateTranspilerPatchForMod` handles "mod not subscribed").
 
@@ -46,9 +47,22 @@ is planned post-1.0.
   ChirpX + Festival + Football + Varsity Sports) — this **merges PLAN.md
   Phase 5 + 6**. Race Day/new panels (Phase 7) and mod-to-mod patches (Phase 8)
   are **post-1.0**.
-- Patch: prefix on `UIDateTimeWrapper.Check` (+ the other panels' refresh
-  methods) applying the offset, returning true so the format transpilers still
-  run. See `reference/UIDateTimeWrapper.cs`.
+- Mechanism (Phase 5, revised from the Phase 4 prefix decision): the transpiler
+  is split into `ReplaceDateFormatString` (format-only — used by
+  `CreateTranspilerPatchForMod`, offset deferred to Phase 8) and
+  `ReplaceDateFormatStringWithOffset` (used by the 7 base-game patches via
+  `CreateTranspilerPatch(..., applyOffset: true)`). The offset variant, after
+  swapping the format string, retargets the paired
+  `DateTime.ToString(string)` call to the static
+  `HarmonyPatcher.OffsetAndFormat(ref DateTime, string)` — IL-compatible
+  because a value-type instance call already pushes the receiver as a
+  `DateTime&`. `OffsetAndFormat` reads the offset live (so runtime config
+  changes apply on next refresh) and never throws.
+- **Why not prefix** (the Phase 4 plan): `ChirpXPanel.UpdateBindings`,
+  `FootballPanel.RefreshMatchInfo`, `VarsitySportsArenaPanel.RefreshPastMatches`
+  read the date from a local copied out of the `EventManager` buffer
+  mid-method — a prefix runs before the body and can't reach it. The transpiler
+  retarget works uniformly for all 7 regardless of param/field/local origin.
 
 ## Identity (set in Phase 2 — keep consistent)
 - Mod name: **Date Format Revisited** · Harmony ID:

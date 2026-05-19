@@ -192,6 +192,28 @@ The "apply to" toggles matter because users might want offset on the HUD but rea
 - **MVP scope:** offset every base-game date the original mod already patches (main HUD + ChirpX + Festival + Football + Varsity Sports).  This **merges Phase 5 and Phase 6** into one offset effort on a single `feat/date-offset` branch.
 - **Post-1.0 (1.X):** Race Day / newer panels (Phase 7) and mod-to-mod offset (Phase 8) — these need extra mods/expansions to test and add conditional surface area.
 
+### Mechanism revised (2026-05-18, during Phase 5)
+
+The Phase 4 plan called for **prefix** patches per panel.  Reading the
+decompiled game source proved this unworkable for the full MVP:
+`ChirpXPanel.UpdateBindings`, `FootballPanel.RefreshMatchInfo`, and
+`VarsitySportsArenaPanel.RefreshPastMatches` read the displayed `DateTime` from
+a **local** copied out of the `EventManager` buffer mid-method — a prefix runs
+before the body and cannot reach it.
+
+**Revised mechanism:** extend the existing transpiler instead.  Split it into
+`ReplaceDateFormatString` (format-only — used by `CreateTranspilerPatchForMod`,
+keeping mod-to-mod offset deferred to Phase 8) and
+`ReplaceDateFormatStringWithOffset` (the 7 base-game patches, via
+`CreateTranspilerPatch(..., applyOffset: true)`).  The offset variant swaps the
+format string and then retargets the paired `DateTime.ToString(string)` call to
+the static `HarmonyPatcher.OffsetAndFormat(ref DateTime, string)` — binary
+IL-compatible because the value-type instance call already pushes the receiver
+as a `DateTime&`.  This works uniformly for all 7 targets regardless of whether
+the date originates as a parameter, field, or local.  UI is a parse+clamp
+number text field.  Wherever Phases 5–6 below say "prefix/postfix patch", read
+"the offset transpiler variant".
+
 ---
 
 ## Phase 5: First Feature—Main HUD Date Offset (2–4 hours)
